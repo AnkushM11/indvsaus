@@ -1,0 +1,599 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////EXP 1
+
+Org 00h
+MOV R2,#0AH
+MOV R0,#20H
+MOV R1,#40H
+L1:MOV A, @R0
+MOV @R1, A
+INC R0
+INC R1
+DJNZ R2,L1
+END
+
+
+
+
+Org 0000h
+MOV R2,#0AH
+MOV R0,#20H
+MOV R1,#25H
+L1:MOV A, @R0
+MOV @R1, A
+DEC R0
+DEC R1
+DJNZ R2,L1
+END
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////EXP 2
+
+
+//toggle
+#include<reg51.h>
+void msdelay(unsigned int);
+void main(void){
+	unsigned int z;
+	while(1){
+		P1=0X08;
+		for(z=0;z<9;z++){
+			msdelay(1000);
+			P1=P1>>1;
+		}
+	}
+}	
+void msdelay(unsigned int time){
+	unsigned int i,j;
+		for(i=0;i<time;i++){
+			for(j=0;j<1275;j++){
+			}
+		}
+}
+//hex
+#include<reg51.h>
+void msdelay(unsigned int);
+void main(void){
+	unsigned int z;
+		for(z=0;z<=255;z++){
+			P1=z;
+			msdelay(500);
+		}
+}	
+void msdelay(unsigned int time){
+	unsigned int i,j;
+		for(i=0;i<time;i++){
+			for(j=0;j<1275;j++){
+			}
+		}
+}
+
+///ascci
+#include<reg51.h>
+void msdelay(unsigned int);
+void main(void){
+	unsigned int z;
+		for(z='A';z<='Z';z++){
+			P1=z;
+			msdelay(1500);
+		}
+}	
+void msdelay(unsigned int time){
+	unsigned int i,j;
+		for(i=0;i<time;i++){
+			for(j=0;j<1275;j++){
+			}
+		}
+}
+
+///bcd
+
+#include<reg51.h>
+void msdelay(unsigned int);
+void main(void){
+	unsigned int y,z;
+		for(y=0;y<=9;y++){
+			for(z=0;z<=9;z++){
+			P1=(y<<4)|z;
+			msdelay(1500);
+			}
+		}
+}	
+void msdelay(unsigned int time){
+	unsigned int i,j;
+		for(i=0;i<time;i++){
+			for(j=0;j<1275;j++){
+			}
+		}
+}
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////EXP3
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////EXP5
+//Expt.1: Interfacing LEDs, Switches, Buzzer and Relay
+//Includes
+#include <p18f4550.h>			//Include Controller specific .h
+#include "vector_relocate.h"	//Vector Remapping for USB HID Bootloader
+
+//Declarations
+#define lrbit 	PORTBbits.RB1   //SW0 interfaced to RB1
+#define rlbit 	PORTBbits.RB0	//SW1 interfaced to RB0
+#define buzzer 	PORTCbits.RC2	//Buzzer interfaced to RC2
+#define relay 	PORTDbits.RD7	//Relay interfaced to RC1
+
+//Function Prototypes
+void msdelay (unsigned int time);//Function for delay
+
+//Start of Program Code
+void main()						//Main Program
+{
+	unsigned char i,val=0;		//Variable to latch the switch condition
+    INTCON2bits.RBPU=0;   		//To Activate the internal pull on PORTB
+	ADCON1 = 0x0F;				//To disable the all analog inputs	
+
+	TRISBbits.RB0=1;  		//To configure RB0 as input for sensing SW1
+	TRISBbits.RB1=1; 		//To configure RB1 as input for sensing SW0
+
+	TRISDbits.TRISD7=0;   		//To configure RC1 (relay) as output
+	TRISCbits.TRISC2=0;			//To configure RC2 (buzzer) as output
+	TRISA = 0x00;				//To configure PORTD (LED) as output
+		
+	PORTA = 0x00;				//Initial Value for LED
+	buzzer = 0;					//Initial Value for Buzzer
+	relay = 0;					//Initial Value for Relay
+
+while (1)						//While loop for repeated operation
+	{
+	if (lrbit==0) 				//To check whether SW0 is pressed
+		val = 1;				// Latch the status of switch SW0
+	if (rlbit==0)				//To check whether SW1 is pressed
+		val = 2;				// Latch the status of switch SW1
+ 
+	if (val == 1)
+	   {
+		buzzer = 1;
+		relay = 1;
+        PORTA = 0x20;
+         msdelay(50);
+     for(i=0;i<8;i++)
+       {
+		PORTA = PORTA >>1; 
+          msdelay(50);
+         } 	//Shift left by 1 bit
+	
+		 		// Make the MSB bit equal to 1
+           }
+	if (val == 2)
+	   {
+		buzzer = 0;
+		relay = 0;
+		PORTA = 0x01;
+         msdelay(50);
+		for(i=0;i<8;i++)
+ {
+		PORTA = PORTA <<1; 
+    msdelay(50);
+} 	//Shift left by 1 bit	// Make the MSB bit equal to 1
+	   }
+	}
+} 								//End of the Program
+
+//Function Definitions
+void msdelay (unsigned int time)//Function for delay
+{
+unsigned int i, j;
+ for (i = 0; i < time; i++)
+	 for (j = 0; j < 710; j++);	//Calibrated for a 1 ms delay in MPLAB
+}
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////exp6
+
+
+
+
+
+
+
+//This program demonstrates the use of timer0 to generate 10Hz frequency by interrrupt method   		   								                                                    
+
+
+
+#include <p18f4550.h>
+void timer_isr(void);
+void delay_ms(unsigned int);
+
+extern void _startup (void);
+#pragma code RESET_INTERRUPT_VECTOR = 0x1000
+
+void reset (void)
+{
+        _asm 
+	goto _startup
+	 _endasm
+}
+#pragma code
+
+#pragma code HIGH_INTERRUPT_VECTOR = 0x1008
+void high_ISR (void)
+{
+	_asm 
+
+	goto timer_isr 
+	_endasm    //The program is relocated to execute the interrupt routine timer_iser
+
+}
+#pragma code
+
+
+// This function is executed as soon as the timer interrupt is generated due to timer overflow
+#pragma interrupt timer_isr
+void timer_isr(void)
+{
+	TMR0H = 0X6D;                         // Reloading the timer values after overflow
+	TMR0L = 0X82;
+	PORTDbits.RD0 = ~PORTDbits.RD0;                         //Toggle the PORTB led outputs RB0 - RB3
+ 	INTCONbits.TMR0IF = 0;	             //Resetting the timer overflow interrupt flag
+}
+
+
+void main()
+{	
+    INTCON2bits.RBPU=0;   		//To Activate the internal pull on PORTB
+	ADCON1 = 0x0F;	
+	TRISD = 0;
+	PORTD=0;		
+	T0CON = 0x03;				//Set the timer to 16-bit mode,internal instruction cycle clock,1:256 prescaler
+  	TMR0H = 0x00;                // Reset Timer0 to 0x48E5 TO MAKE DELAY OF 1 SECOND
+  	TMR0L = 0x00;   
+	INTCONbits.GIE = 1;			// Global interrupt enabled
+	INTCONbits.TMR0IE = 1;		// TMR0 interrupt enabled
+ 	T0CONbits.TMR0ON = 1;		// Start timer0
+	while(1);
+}
+
+
+void delay_ms(unsigned int time)
+{
+ unsigned int i,j;
+  for (i=0;i<time;i++)
+	for (j=0; j<710;j++);
+}  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////exp7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <p18f4550.h>
+
+//Declarations
+#define LCD_DATA    PORTD			//LCD data port to PORTD
+#define ctrl        PORTE			//LCD control port to PORTE
+#define rs          PORTEbits.RE0	//register select signal to RE0
+#define rw          PORTEbits.RE1	//read/write signal to RE1
+#define en          PORTEbits.RE2	//enable signal to RE2
+
+//Function Prototypes
+void init_LCD(void);					//Function to initialise the LCD		
+void LCD_command(unsigned char cmd);	//Function to pass command to the LCD
+void LCD_data(unsigned char data);		//Function to write character to the LCD
+void LCD_write_string(static char *str);//Function to write string to the LCD
+void msdelay (unsigned int time);		//Function to generate delay
+void main()
+{
+	char  msg1 [] = "Expt No:3";
+	char  msg2 [] = "4x4 KEYPAD TEST";
+	ADCON1=0x0F;
+
+	TRISD = 0x00;
+	TRISE = 0x00;
+	init_LCD();
+	msdelay(50);
+	LCD_write_string(var1);
+	msdelay(15);
+	LCD_command(0xC0);
+	LCD_write_string(var2);
+	while(1);
+}
+//Function Definitions
+void msdelay (unsigned int time) //Function to generate delay
+{
+unsigned int i, j;
+  for (i = 0; i < time; i++)
+	for (j = 0; j < 710; j++);//Calibrated for a 1 ms delay in MPLAB
+}
+
+void init_LCD(void)		// Function to initialise the LCD
+{
+    LCD_command(0x38);      // initialization of 16X2 LCD in 8bit mode
+    msdelay(15);
+    LCD_command(0x01);      // clear LCD
+    msdelay(15);
+    LCD_command(0x0C);      // cursor off
+    msdelay(15);
+    LCD_command(0x80);      // go to first line and 0th position
+    msdelay(15);
+}
+
+void LCD_command(unsigned char cmd) //Function to pass command to the LCD
+{
+    LCD_DATA = cmd;		//Send data on LCD data bus
+    rs = 0;				//RS = 0 since command to LCD
+    rw = 0;				//RW = 0 since writing to LCD
+    en = 1;				//Generate High to low pulse on EN
+    msdelay(15);
+    en = 0;
+}
+
+void LCD_data(unsigned char data)//Function to write data to the LCD
+{
+    LCD_DATA = data;	//Send data on LCD data bus
+    rs = 1;				//RS = 1 since data to LCD
+    rw = 0;				//RW = 0 since writing to LCD
+    en = 1;				//Generate High to low pulse on EN
+  	msdelay(15);
+    en = 0;
+}
+//Function to write string to LCD
+void LCD_write_string(static char *str)   
+{
+    int i = 0;
+    while (str[i] != 0)
+    {
+        LCD_data(str[i]);      // sending data on LCD byte by byte
+        msdelay(15);
+        i++;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////exp8
+
+
+
+pwm.c
+			
+ // program to generate 4 kHz PWM waveform
+#include<p18f4520.h>
+#include "vector_relocate.h"
+
+void myMsDelay (unsigned int time);
+
+void main()
+{ 
+	TRISCbits.TRISC2 = 0 ;              // Set PORTC, 2 as output
+    TRISD=0;
+	PR2 = 0XBB;                         
+    
+    CCP1CON = 0x0C;                     // Configure CCP1CON as explained above.
+ 	T2CON = 0x07;
+
+	PORTDbits.RD5 = 1 ;  // anticolockwise
+	PORTDbits.RD6 = 0 ;
+  while(1)
+	{
+
+		CCPR1L = 0xBB;  //0b10111011//187
+		CCP1CONbits.DC1B0=0;
+		CCP1CONbits.DC1B1=0;
+		myMsDelay(200);
+
+
+		CCPR1L = 149;
+		CCP1CONbits.DC1B0=0;
+		CCP1CONbits.DC1B1=1;
+		myMsDelay(10);
+
+		CCPR1L = 112;
+		CCP1CONbits.DC1B0=1;
+		CCP1CONbits.DC1B1=0;
+		myMsDelay(100);
+
+		CCPR1L = 0x4A;
+		CCP1CONbits.DC1B0=1;
+		CCP1CONbits.DC1B1=1;
+		myMsDelay(5);
+
+		CCPR1L = 0x25;
+		CCP1CONbits.DC1B0=0;
+		CCP1CONbits.DC1B1=1;
+		myMsDelay(10);
+	
+	
+ 	}   
+ 
+}
+
+
+void myMsDelay (unsigned int time)
+{
+	unsigned int i, j;
+	for (i = 0; i < time; i++)
+		for (j = 0; j <665; j++);/*Calibrated for a 1 ms delay in MPLAB*/
+}
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////exp9
+adc.c
+#include<p18f4550.h>
+#include"vector_relocate.h"
+
+#define LCD_DATA    PORTD               //LCD data port               //LCD signal port
+#define en          PORTEbits.RE2      // enable signal
+#define rw          PORTEbits.RE1      // read/write signal
+#define rs          PORTEbits.RE0     // register select signal
+
+void LCD_cmd(unsigned char cmd);
+void myMsDelay (unsigned int time)
+{
+	unsigned int i, j;
+	for (i = 0; i < time; i++)
+		for (j = 0; j < 665; j++);
+}
+
+void init_LCD(void)
+{
+    LCD_cmd(0x38);      // initialization of 16X2 LCD in 8bit mode
+    myMsDelay(15);
+
+    LCD_cmd(0x01);      // clear LCD
+    myMsDelay(15);
+
+    LCD_cmd(0x0E);      // cursor off
+    myMsDelay(15);
+
+    LCD_cmd(0x80);      // ---8 go to first line and --0 is for 0th position
+    myMsDelay(15);
+
+           // ---8 go to first line and --0 is for 0th position
+
+}
+//Function to pass command to the LCD
+void LCD_cmd(unsigned char cmd)
+{
+    LCD_DATA = cmd;
+    rs = 0;
+    rw = 0;
+    en = 1;
+    myMsDelay(15);
+    en = 0;
+    myMsDelay(15);
+
+}
+
+//Function to write data to the LCD
+void LCD_write(unsigned char data)
+{
+    LCD_DATA = data;
+    rs = 1;
+    rw = 0;
+    en = 1;
+    myMsDelay(15);
+    en = 0;
+    myMsDelay(15);
+   
+}
+
+void main(void)
+{
+ unsigned int val[4],ADC_Result=0,var;
+unsigned char i,str[]="Result:";
+
+ 
+ TRISD = 0x00;         //Configuring PORTD as output 
+
+TRISE=0;
+TRISA=0xFF;
+init_LCD();
+// ADC Initialization
+ ADCON1=0x0A;	// Reference as VDD & VSS, AN0 set as analog pins
+ ADCON2=0b10010110; // Result is right Justified
+					//Acquisition Time 4TAD
+					//ADC Clk FOSC/64 
+ ADCON0=0X09; //Turn ON ADC module
+ 
+LCD_cmd(0x80);
+for(i=0;str[i]!='\0';i++)
+{
+LCD_write(str[i]);
+myMsDelay(200);
+}
+ while(1)
+ {
+  ADCON0bits.GO=1;
+  while(ADCON0bits.GO==1);
+ var=((unsigned int)ADRESH) << 8;
+  ADC_Result=var+ADRESL;
+
+
+for(i=0;i<4;i++)
+{
+val[i]=ADC_Result%0x0A;
+val[i]=val[i]+0x30;
+ADC_Result=ADC_Result/0x0A;
+}
+
+
+LCD_cmd(0x87);
+LCD_write(val[3]);
+LCD_write(val[2]);
+LCD_write(val[1]);
+LCD_write(val[0]);
+
+
+
+
+
+
+//myMsDelay(500);
+ }
+}
